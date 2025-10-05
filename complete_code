@@ -1,0 +1,51 @@
+# How has gender parity in upper secondary education evolved in Bhutan between 1998 and 2018, as measured by the gross enrolment ratios of female versus male students?
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# Folders
+data_raw_folder = "data_raw/"
+data_clean_folder = "data_clean/"
+figures_folder = "figures/"
+
+# Load CSV
+filename = "education_btn_filtered.csv"  # Filtered dataset with only relevant rows
+df = pd.read_csv(os.path.join(data_raw_folder, filename))
+
+# Keep only needed columns
+df = df[["Year", "Indicator Name", "Value"]]
+
+# Convert Year and Value to numeric, drop invalid rows
+df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
+df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+df = df.dropna(subset=["Year", "Value"])
+
+# Pivot indicators into separate columns
+df_pivot = df.pivot(index="Year", columns="Indicator Name", values="Value").reset_index()
+df_pivot = df_pivot.sort_values("Year")
+
+print("Pivoted Bhutan dataset:")
+display(df_pivot)
+
+# Interpolate missing values for smooth plotting (optional)
+df_plot = df_pivot.interpolate(method='linear')
+
+# Plot the two indicators
+plt.figure(figsize=(10,6))
+plt.plot(df_plot["Year"], df_plot["Gross enrolment ratio, upper secondary, female (%)"], 
+         marker='o', linestyle='-', label="Gross enrolment ratio, upper secondary, female (%)")
+plt.plot(df_plot["Year"], df_plot["Gross enrolment ratio, upper secondary, male (%)"], 
+         marker='o', linestyle='-', label="Gross enrolment ratio, upper secondary, male (%)")
+
+plt.title("Bhutan: Gross enrolment ratio, upper secondary, female vs Gross enrolment ratio, upper secondary, male (%) (1998-2018)")
+plt.xlabel("Year")
+plt.ylabel("Percentage")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(figures_folder, "bhutan_gross_enrolment_ratio_upper_secondary_female_vs_male.png"))
+plt.show()
+
+# Save cleaned CSV
+df_pivot.to_csv(os.path.join(data_clean_folder, "bhutan_gross_enrolment_ratio_upper_secondary_female_vs_male"), index=False)
